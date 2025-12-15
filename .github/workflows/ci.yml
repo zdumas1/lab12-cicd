@@ -129,20 +129,16 @@ jobs:
             ${{ runner.os }}-${{ matrix.platform }}-e2e-
 
       - name: Install E2E test dependencies
-        working-directory: e2e-tests
         run: |
-          python -m venv env
-          source env/bin/activate
           python -m pip install --upgrade pip
+          pip install -r e2e-tests/requirements.txt
 
       - name: Wait for services to be ready
         run: sleep 60
 
       - name: Run E2E tests
-        working-directory: e2e-tests
         run: |
-          source env/bin/activate
-
+          pytest e2e-tests/tests
       - name: Stop Docker containers
         if: always()
         run: |

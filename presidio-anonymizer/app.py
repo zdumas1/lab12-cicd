@@ -10,6 +10,9 @@ from presidio_anonymizer import AnonymizerEngine, DeanonymizeEngine
 from presidio_anonymizer.entities import InvalidParamError
 from presidio_anonymizer.services.app_entities_convertor import AppEntitiesConvertor
 from werkzeug.exceptions import BadRequest, HTTPException
+import presidio_anonymizer.operators.genz
+from presidio_anonymizer.operators.genz import GenZ
+
 
 DEFAULT_PORT = "3000"
 
@@ -66,6 +69,33 @@ class Server:
                 operators=anonymizers_config,
             )
             return Response(anoymizer_result.to_json(), mimetype="application/json")
+        @self.app.route("/genz", methods=["POST"])
+        def genz():
+            content = request.get_json()
+            if not content:
+                raise BadRequest("Invalid request json")
+
+            # Reuse Presidio's official converter
+            analyzer_results = AppEntitiesConvertor.analyzer_results_from_json(
+            content.get("analyzer_results")
+            )
+
+            # Force genz operator
+            anonymizers_config = AppEntitiesConvertor.operators_config_from_json(
+            {
+            "DEFAULT": {
+                "type": "genz"
+            }
+            }
+            )
+
+            result = self.anonymizer.anonymize(
+            text=content.get("text", ""),
+            analyzer_results=analyzer_results,
+            operators=anonymizers_config,
+            )
+
+            return Response(result.to_json(), mimetype="application/json")
 
         @self.app.route("/deanonymize", methods=["POST"])
         def deanonymize() -> Response:
@@ -85,7 +115,14 @@ class Server:
             return Response(
                 deanonymized_response.to_json(), mimetype="application/json"
             )
-
+        @self.app.route("/genz-preview", methods=["GET"])
+        def genz_preview():
+            response = {
+            "example": "Call Emily at 577-988-1234",
+            "example_output": "Call GOAT at vibe check",
+            "description": "Example output of the genz anonymizer."
+            }
+            return jsonify(response)
         @self.app.route("/anonymizers", methods=["GET"])
         def anonymizers():
             """Return a list of supported anonymizers."""

@@ -48,3 +48,11 @@ def __get_multipart_form_data(file):
             "image": (file.name, file, "multipart/form-data"),
         }
     return multipart_form_data
+
+def genz_anonymize(base_url, payload):
+    return requests.post(
+        f"{base_url}/genz",
+        json=payload,
+        headers={"Content-Type": "application/json"},
+        timeout=5,
+    )
